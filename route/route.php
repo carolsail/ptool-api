@@ -8,3 +8,6 @@ Route::get('auth/refresh', 'api/Auth/refresh');
 Route::post('task/items', 'api/Task/items');
 Route::post('task/change/urgent', 'api/Task/changeUrgent');
 Route::post('task/categories', 'api/Task/getCategories');
+Route::post('task/item/add', 'api/Task/addItem');
+Route::post('task/item/delete', 'api/Task/deleteItem');
+Route::post('task/item/update', 'api/Task/updateItem');
