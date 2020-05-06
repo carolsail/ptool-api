@@ -23,8 +23,9 @@ class Task extends Base
 		$current_timers = [];
 		if($last_timer){
 			$seconds = intval($last_timer['start'] + $last_timer['duration'] - time());
+			trace('====seconds===='.$seconds, 'alert');
 			// 此时已经超时
-			if($seconds < 0 && $last_timer['type'] == 'start'){
+			if($seconds <= 0 && $last_timer['type'] == 'start'){
 				$item = model('TaskItem')->find($last_timer['item_id']);
 				$item->save(['status' => 4, 'status_text' => 'overing', 'is_top' => 3, 'update_time' => time()]);
 				$item->timers()->save([
