@@ -122,7 +122,7 @@ class Task extends Base
 
 		$item = model('TaskItem')->get($task['id']);
 		if($item->status != 1){
-			return ajaxReturn('status has change, can not be update');
+			// return ajaxReturn('status has change, can not be update');
 		}
 
 		$data['title'] = $task['title'];
