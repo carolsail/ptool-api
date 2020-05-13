@@ -73,19 +73,7 @@ class Task extends Base
 		return ajaxReturn('urgent change success', true);
 	}
 
-	public function getCategories(){
-		$where = new \think\db\Where;
-		if(input('post.search')){
-			$where['title'] = ['like', '%'.input('post.search').'%'];
-		}
-		$where['is_active'] = ['=', 1];
-		$lists = model('TaskCategory')->where($where)->order('create_time', 'desc')->limit(10)->select();
-		foreach($lists as $list){
-			$list['label'] = $list['title'];
-			$list['value'] = $list['id'];
-		}
-		return ajaxReturn($lists, true);
-	}
+
 
 	public function addItem(){
 		$task = input('post.');
@@ -244,6 +232,20 @@ class Task extends Base
 	/**
 	 * ========================== categories ==================================
 	 */
+	public function searchCategory(){
+		$where = new \think\db\Where;
+		if(input('post.search')){
+			$where['title'] = ['like', '%'.input('post.search').'%'];
+		}
+		$where['is_active'] = ['=', 1];
+		$lists = model('TaskCategory')->where($where)->order('create_time', 'desc')->limit(10)->select();
+		foreach($lists as $list){
+			$list['label'] = $list['title'];
+			$list['value'] = $list['id'];
+		}
+		return ajaxReturn($lists, true);
+	}
+
 	public function categories(){
 		$startRow = input('post.startRow', 0);
 		$rowsPerPage = input('post.rowsPerPage', 10);
