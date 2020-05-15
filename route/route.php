@@ -21,3 +21,8 @@ Route::post('task/category/search', 'api/Task/searchCategory');
 
 //task timer
 Route::post('task/timer/add', 'api/Task/addTimer');
+
+//task deadline
+Route::get('task/deadline/mark', 'api/Task/deadlineMark');
+Route::get('task/deadlines', 'api/Task/deadlines');
+Route::post('task/deadline/change/check', 'api/Task/changeDeadlineCheck');

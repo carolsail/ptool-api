@@ -10,7 +10,7 @@ Target Server Type    : MYSQL
 Target Server Version : 50726
 File Encoding         : 65001
 
-Date: 2020-05-06 17:01:32
+Date: 2020-05-15 14:41:00
 */
 
 SET FOREIGN_KEY_CHECKS=0;
@@ -36,7 +36,7 @@ CREATE TABLE `account` (
 -- ----------------------------
 -- Records of account
 -- ----------------------------
-INSERT INTO `account` VALUES ('1', 'admin', '6ccc438bbf1dbf0782e0094aa3920c6c', 'carolsail', 'carolsail2013@gmail.com', '123', '6ywJ9I', '32', null, null);
+INSERT INTO `account` VALUES ('1', 'admin', '6ccc438bbf1dbf0782e0094aa3920c6c', 'carolsail', 'carolsail2013@gmail.com', '123', '8ptuTU', '32', null, null);
 
 -- ----------------------------
 -- Table structure for `task_category`
@@ -71,6 +71,9 @@ CREATE TABLE `task_item` (
   `deadline` int(11) DEFAULT NULL,
   `create_time` int(11) DEFAULT NULL,
   `update_time` int(11) DEFAULT NULL,
+  `deadline_check` int(2) DEFAULT '0' COMMENT '标识deadline已经check',
+  `is_deadline` int(2) DEFAULT '0' COMMENT '当任务完成，待完成时间超过deadline的时候便置为deadline=1',
+  `deadline_daily` int(11) DEFAULT '0',
   PRIMARY KEY (`id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4;
 

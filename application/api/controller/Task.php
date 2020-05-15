@@ -73,8 +73,6 @@ class Task extends Base
 		return ajaxReturn('urgent change success', true);
 	}
 
-
-
 	public function addItem(){
 		$task = input('post.');
 		$validate = new TaskItem();
@@ -130,6 +128,9 @@ class Task extends Base
 		return ajaxReturn('success', true);
 	}
 
+	/**
+	 * ======================== timer =================================
+	 */
 	public function addTimer(){
 		$data = input('param.');
 		
@@ -307,6 +308,94 @@ class Task extends Base
 		$data['update_time'] = time();
 		$item->save($data);
 		return ajaxReturn('success', true);
+	}
+
+	/**
+	 * ======================== deadline =================================
+	 */
+	public function deadlines(){
+		$where = [
+            'is_deadline' => 1,
+            'deadline_check' => 0
+        ];  
+        $total = model('TaskItem')->where($where)->count();
+        $lists = model('TaskItem')->where($where)->limit(5)->select();
+        return ajaxReturn(['total'=>$total, 'lists'=>$lists], true);
+	}
+
+	/**
+	 * 当天之前的所有deadline
+	 * 条件: deadline > 完成任务时间
+	 * is_deadline置为1
+	 */
+	public function deadlineMark(){
+		$now = strtotime(date('Y-m-d'));
+        $where = [
+            ['deadline_daily', '<', $now],
+            ['deadline', '>', 0]
+        ];
+        $tasks = model('TaskItem')->where($where)->select();
+        $deadlines = [];
+        foreach($tasks as $task){
+            //今天檢查昨天的deadline（以天爲單位）
+            if($now>$task['deadline']){
+                //task狀態為done
+                if($task['status']==5){
+                    //和timer最後一條完成時間比較
+                    $timer = $task->timers()->where('type','done')->order('id','desc')->find();
+                    if($timer){
+                        $endDayTime = strtotime(date('Y-m-d', $timer['start']));
+                        if($task['deadline']<$endDayTime){
+                            //標識deadline
+                            $deadlines[] = [
+                                'id' => $task['id'],
+                                'is_deadline' => 1,
+                                'deadline_daily' => $now
+                            ];
+                        }
+                    }else{
+                        //標識deadline
+                        $deadlines[] = [
+                            'id' => $task['id'],
+                            'is_deadline' => 1,
+                            'deadline_daily' => $now
+                        ];
+                    }
+                }else{
+                    //標識deadline
+                    $deadlines[] = [
+                        'id' => $task['id'],
+                        'is_deadline' => 1,
+                        'deadline_daily' => $now
+                    ];
+                }
+            }
+        }
+        if($deadlines){
+            //修改task中deadline信息
+            model('TaskItem')->saveAll($deadlines);
+        }
+        return ajaxReturn(['total'=>count($deadlines), 'lists'=>$deadlines], true);
+	}
+	/**
+	 * 将is_deadline=1 标志为已读
+	 */
+	public function changeDeadlineCheck(){
+		$id = input('post.id');
+        if($id){
+            $task = model('TaskItem')->find($id);
+            if($task->is_deadline && !$task->deadline_check){
+                $task->save(['deadline_check'=>1]);
+            }
+        }else{
+            $tasks = model('TaskItem')->where(['is_deadline'=>1, 'deadline_check'=>0])->select();
+            $list = [];
+            foreach($tasks as $task){
+                $list[] = ['id'=>$task['id'], 'deadline_check'=>1];
+            }
+            model('TaskItem')->saveAll($list);
+        }
+        return ajaxReturn('success', true);
 	}
 
 }
