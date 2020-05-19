@@ -1,4 +1,7 @@
 <?php
+// upload
+Route::post('upload', 'api/Upload/index');
+
 // auth
 Route::post('auth/login', 'api/Auth/login');
 Route::get('auth/verify', 'api/Auth/verify');
@@ -19,10 +22,13 @@ Route::post('task/category/update', 'api/Task/updateCategory');
 Route::post('task/category/change/active', 'api/Task/changeCategoryActive');
 Route::post('task/category/search', 'api/Task/searchCategory');
 
-//task timer
+// task timer
 Route::post('task/timer/add', 'api/Task/addTimer');
 
-//task deadline
+// task deadline
 Route::get('task/deadline/mark', 'api/Task/deadlineMark');
 Route::get('task/deadlines', 'api/Task/deadlines');
 Route::post('task/deadline/change/check', 'api/Task/changeDeadlineCheck');
+
+// sheets
+Route::get('sheet/google/sheets', 'api/Sheet/googleSheets');

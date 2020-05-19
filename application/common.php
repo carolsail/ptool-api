@@ -25,3 +25,31 @@ if( ! function_exists('formatPassword'))
 		return md5(config('auth.encryption_key').trim($str));
 	}
 }
+
+if (! function_exists('path_disk')) {
+    /**
+     * 查看文件在磁盘中的具体路径
+     *
+     * @param  string  $path
+     * @return string
+     */
+    function path_disk($path = '')
+    {
+        $path = \think\facade\Env::get('root_path') . ltrim($path, DIRECTORY_SEPARATOR);
+        return $path;
+    }
+}
+
+if (! function_exists('public_path')) {
+    /**
+     * public路径, 模板中静态资源引用
+     * @param  string  $path
+     * @return string
+     */
+    function public_path($path = '')
+    {
+        //去index.php
+        $path = '/' . ltrim($path, '/');
+        return preg_replace("/\/(\w+)\.php$/i", '', request()->root()) . $path;
+    }
+}
