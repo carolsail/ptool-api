@@ -7,7 +7,7 @@ class Sheet extends Base
 		$client = new \Google_Client();
 	    $client->setApplicationName('Google Sheets API PHP');
 	    $client->setScopes(\Google_Service_Sheets::SPREADSHEETS);
-	    $client->setAuthConfig(path_disk('public/json/google_sheets_key.json'));
+	    $client->setAuthConfig(diskPath('public/json/google_sheets_key.json'));
 	    $client->setAccessType('offline');
 
 		$service = new \Google_Service_Sheets($client);

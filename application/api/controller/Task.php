@@ -2,6 +2,7 @@
 namespace app\api\controller;
 use app\api\validate\TaskItem;
 use app\api\validate\TaskCategory;
+use app\api\exception\GeneralException; 
 
 class Task extends Base
 {
@@ -60,7 +61,7 @@ class Task extends Base
 		}
 
 
-		return ajaxReturn(['total'=>$total, 'lists'=>$lists, 'current_timers'=>$current_timers], true);
+		return ajaxReturn(['total'=>$total, 'lists'=>$lists, 'current_timers'=>$current_timers]);
 	}
 
 	public function changeItemUrgent(){
@@ -70,62 +71,41 @@ class Task extends Base
 			$update['update_time'] = time();
 		}
 		model('TaskItem')->where('id', input('post.id'))->update($update);
-		return ajaxReturn('urgent change success', true);
+		return ajaxReturn('urgent change success');
 	}
 
 	public function addItem(){
+		(new TaskItem())->goCheck();
+
 		$task = input('post.');
-		$validate = new TaskItem();
-		if (!$validate->check($task)) {
-           return ajaxReturn($validate->getError());
-        }
 		$item['title'] = $task['title'];
 		$item['create_time'] = $item['update_time'] = time();
 		if($task['deadline']) {
-			$deadline = strtotime($task['deadline']);
-			if($deadline <= time()){
-				return ajaxReturn('Deadline incorrect');
-			}
-			$item['deadline'] = $deadline;
+			$item['deadline'] = strtotime($task['deadline']);
 		}
 		if(isset($task['category']) && $task['category']) $item['category_id'] = $task['category']['id'];
 		model('TaskItem')->save($item);
-		return ajaxReturn('success', true);
+		return ajaxReturn('item add success');
 	}
 
 	public function deleteItem(){
 		$item = model('TaskItem')->get(input('post.id'));
 		$item->delete();
-		return ajaxReturn('success', true);
+		return ajaxReturn('success');
 	}
 
 	public function updateItem(){
-		$task = input('post.');
-		$validate = new TaskItem();
-		if (!$validate->check($task)) {
-           return ajaxReturn($validate->getError());
-        }
+		(new TaskItem())->goCheck();
 
+		$task = input('post.');
 		$item = model('TaskItem')->get($task['id']);
-		if($item->status != 1){
-			// return ajaxReturn('status has change, can not be update');
-		}
 
 		$data['title'] = $task['title'];
 		$data['update_time'] = time();
-
-		$deadline = null;
-		if($task['deadline']) {
-			$deadline = strtotime($task['deadline']);
-			if($deadline <= time()){
-				return ajaxReturn('Deadline incorrect');
-			}
-		}
-		$data['deadline'] = $deadline;
-
+		$data['deadline'] = $task['deadline'] ? strtotime($task['deadline']) : null;
 		$data['category_id'] = (isset($task['category']) && $task['category']) ? $task['category']['id'] : null;
 		$item->save($data);
-		return ajaxReturn('success', true);
+		return ajaxReturn('item update success');
 	}
 
 	/**
@@ -138,10 +118,10 @@ class Task extends Base
 		$last_timer = $row->timers()->order('id','desc')->limit(1)->find();
 		if($row){
 			if($row['status']==5){
-				return ajaxReturn('task status has done');
+				throw new GeneralException(['msg'=>'task status has done']);
 			}
 		}else{
-			return ajaxReturn('no task row');
+			throw new GeneralException(['msg'=>'no task row']);
 		}
 
 		$timer = [];
@@ -151,11 +131,11 @@ class Task extends Base
 		switch($data['type']){
 			case 'start':
 				if(!($data['hours'] || $data['minutes'])){
-					return ajaxReturn('duration can not be empty');
+					throw new GeneralException(['msg'=>'duration can not be empty']);
 				}
 
 				if($last_timer){
-					return ajaxReturn('timer status has changed');
+					throw new GeneralException(['msg'=>'timer status has changed']);
 				}
 
 				$timer['type'] = $data['type'];
@@ -167,7 +147,7 @@ class Task extends Base
 			break;
 			case 'pause':
 				if(!($last_timer['type']=='start' || $last_timer['type']=='over')){
-					return ajaxReturn('timer status has changed');
+					throw new GeneralException(['msg'=>'timer status has changed']);
 				}
 
 				$timer['type'] = $data['type'];
@@ -179,7 +159,7 @@ class Task extends Base
 			break;
 			case 'resume':
 				if($last_timer['type']!='pause'){
-					return ajaxReturn('timer status has changed');
+					throw new GeneralException(['msg'=>'timer status has changed']);
 				}
 
 				if($last_timer['duration'] > 0){
@@ -208,7 +188,7 @@ class Task extends Base
 			break;
 			case 'done':
 				if($last_timer['type']=='done'){
-					return ajaxReturn('timer status has changed');
+					throw new GeneralException(['msg'=>'timer status has changed']);
 				}
 
 				if($last_timer['type']=='start' || $last_timer['type']=='over'){
@@ -227,7 +207,7 @@ class Task extends Base
 			break;
 		}
 
-		return ajaxReturn('success', true);
+		return ajaxReturn('success');
 	}
 
 	/**
@@ -244,7 +224,7 @@ class Task extends Base
 			$list['label'] = $list['title'];
 			$list['value'] = $list['id'];
 		}
-		return ajaxReturn($lists, true);
+		return ajaxReturn($lists);
 	}
 
 	public function categories(){
@@ -266,7 +246,7 @@ class Task extends Base
 		foreach($lists as $list){
 			$list['is_active'] = (bool)$list['is_active'];
 		}
-		return ajaxReturn(['total'=>$total, 'lists'=>$lists], true);
+		return ajaxReturn(['total'=>$total, 'lists'=>$lists]);
 	}
 
 	public function changeCategoryActive(){
@@ -274,40 +254,35 @@ class Task extends Base
 		$update['is_active'] = $is_active;
 		$update['update_time'] = time();
 		model('TaskCategory')->where('id', input('post.id'))->update($update);
-		return ajaxReturn('active change success', true);
+		return ajaxReturn('active change success');
 	}
 
 	public function addCategory(){
-		$category = input('post.');
-		$validate = new TaskCategory();
-		if (!$validate->check($category)) {
-           return ajaxReturn($validate->getError());
-        }
+		(new TaskCategory())->goCheck();
 
+		$category = input('post.');
 		$item['title'] = $category['title'];
 		$item['create_time'] = $item['update_time'] = time();
 		model('TaskCategory')->save($item);
-		return ajaxReturn('success', true);
+		return ajaxReturn('success');
 	}
 
 	public function deleteCategory(){
 		$item = model('TaskCategory')->get(input('post.id'));
 		$item->delete();
-		return ajaxReturn('success', true);
+		return ajaxReturn('success');
 	}
 
 	public function updateCategory(){
+		(new TaskCategory())->goCheck();
+
 		$category = input('post.');
-		$validate = new TaskCategory();
-		if (!$validate->check($category)) {
-           return ajaxReturn($validate->getError());
-        }
 		$item = model('TaskCategory')->get($category['id']);
 		$data['title'] = $category['title'];
 		$data['remark'] = trim($category['remark']);
 		$data['update_time'] = time();
 		$item->save($data);
-		return ajaxReturn('success', true);
+		return ajaxReturn('success');
 	}
 
 	/**
@@ -320,7 +295,7 @@ class Task extends Base
         ];  
         $total = model('TaskItem')->where($where)->count();
         $lists = model('TaskItem')->where($where)->limit(5)->select();
-        return ajaxReturn(['total'=>$total, 'lists'=>$lists], true);
+        return ajaxReturn(['total'=>$total, 'lists'=>$lists]);
 	}
 
 	/**
@@ -375,7 +350,7 @@ class Task extends Base
             //修改task中deadline信息
             model('TaskItem')->saveAll($deadlines);
         }
-        return ajaxReturn(['total'=>count($deadlines), 'lists'=>$deadlines], true);
+        return ajaxReturn(['total'=>count($deadlines), 'lists'=>$deadlines]);
 	}
 	/**
 	 * 将is_deadline=1 标志为已读
@@ -395,7 +370,7 @@ class Task extends Base
             }
             model('TaskItem')->saveAll($list);
         }
-        return ajaxReturn('success', true);
+        return ajaxReturn('success');
 	}
 
 }

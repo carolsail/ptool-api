@@ -4,7 +4,7 @@ Route::post('upload', 'api/Upload/index');
 
 // auth
 Route::post('auth/login', 'api/Auth/login');
-Route::get('auth/verify', 'api/Auth/verify');
+Route::get('auth/info', 'api/Auth/info');
 Route::get('auth/refresh', 'api/Auth/refresh');
 
 // task item
@@ -32,3 +32,7 @@ Route::post('task/deadline/change/check', 'api/Task/changeDeadlineCheck');
 
 // sheets
 Route::get('sheet/google/sheets', 'api/Sheet/googleSheets');
+
+
+// Test测试接口
+Route::get('test/index', 'api/Test/index');

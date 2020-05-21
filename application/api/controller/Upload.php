@@ -2,14 +2,29 @@
 namespace app\api\controller;
 use Random;
 use think\facade\Env;
+use app\api\exception\GeneralException; 
 
 class Upload extends Base
 {
 	public function index(){
 		$file = $this->request->file('file');
- 		if (empty($file)) {
-            return ajaxReturn('No file upload or server upload limit exceeded');
+		if (empty($file)) {
+            throw new GeneralException(['msg'=>'No file upload or server upload limit exceeded']);
         }
+
+		if(is_array($file)){
+			//数组上传
+			foreach($file as $v){
+				$res[] = $this->start($v);
+			}
+		}else{
+			$res = $this->start($file);
+		}
+
+		return ajaxReturn($res);
+	}
+
+	private function start($file){
 		//判断是否已经存在附件
         $sha1 = $file->hash();
         $extparam = $this->request->post();
@@ -29,7 +44,7 @@ class Upload extends Base
 
         //禁止上传PHP和HTML文件
         if (in_array($fileInfo['type'], ['text/x-php', 'text/html']) || in_array($suffix, ['php', 'html', 'htm'])) {
-            return ajaxReturn('Uploaded file format is limited');
+            return 'Uploaded file format is limited';
         }
         //验证文件后缀
         if ($upload['mimetype'] !== '*' &&
@@ -38,14 +53,14 @@ class Upload extends Base
                 || (stripos($typeArr[0] . '/', $upload['mimetype']) !== false && (!in_array($fileInfo['type'], $mimetypeArr) && !in_array($typeArr[0] . '/*', $mimetypeArr)))
             )
         ) {
-            return ajaxReturn('Uploaded file format is limited');
+            return 'Uploaded file format is limited';
         }
         //验证是否为图片文件
         $imagewidth = $imageheight = 0;
         if (in_array($fileInfo['type'], ['image/gif', 'image/jpg', 'image/jpeg', 'image/bmp', 'image/png', 'image/webp']) || in_array($suffix, ['gif', 'jpg', 'jpeg', 'bmp', 'png', 'webp'])) {
             $imgInfo = getimagesize($fileInfo['tmp_name']);
             if (!$imgInfo || !isset($imgInfo[0]) || !isset($imgInfo[1])) {
-                return ajaxReturn('Uploaded file is not a valid image');
+                return 'Uploaded file is not a valid image';
             }
             $imagewidth = isset($imgInfo[0]) ? $imgInfo[0] : $imagewidth;
             $imageheight = isset($imgInfo[1]) ? $imgInfo[1] : $imageheight;
@@ -69,7 +84,7 @@ class Upload extends Base
 
         $uploadDir = substr($savekey, 0, strripos($savekey, '/') + 1);
         $fileName = substr($savekey, strripos($savekey, '/') + 1);
-        
+
         $splInfo = $file->validate(['size' => $size])->move(Env::get('root_path') . '/public' . $uploadDir, $fileName);
         if ($splInfo) {
             $params = [
@@ -85,10 +100,10 @@ class Upload extends Base
                 'sha1'        => $sha1,
                 'extparam'    => json_encode($extparam)
             ];
-            return ajaxReturn($params, true);
+            return $params;
         } else {
             // 上传失败获取错误信息
-            return ajaxReturn($file->getError());
+            return $file->getError();
         }
 	}
 }
